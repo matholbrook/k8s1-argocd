@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatekeeper
+  namespace: argocd
+  finalizers:
+    - argocd.argoproj.io/resources-finalizer
+spec:
+  project: default
+  source:
+    repoURL: https://github.io
+    chart: gatekeeper
+    targetRevision: 3.18.2
+
+    # Inline Helm Values overrides
+    helm:
+      values: |
+        # Recommended for GitOps: Ensures webhooks are cleanly removed if the 
+        # application is deleted, preventing your API server from locking up.
+        uninstallWebhookConfiguration: true
+        
+        # Optional production tuning: Adjust replicas for high availability
+        replicas: 3
+        auditInterval: 60
+  
+  destination:
+    server: https://default.svc
+    namespace: gatekeeper-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+
+  # CRITICAL FOR GLOOMY/PERPETUAL OUTOFSYNC PREVENTION
+  # Instructs ArgoCD to ignore the dynamic TLS configuration injected by Gatekeeper at runtime
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: gatekeeper-validating-webhook-configuration
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: gatekeeper-mutating-webhook-configuration
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
