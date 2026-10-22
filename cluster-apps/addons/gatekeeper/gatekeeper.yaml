@@ -24,7 +24,7 @@ spec:
         auditInterval: 60
   
   destination:
-    server: https://default.svc
+    server: https://kubernetes.default.svc
     namespace: gatekeeper-system
     
   syncPolicy:
