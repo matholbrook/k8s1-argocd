@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: gatekeeper
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
   finalizers:
     - argocd.argoproj.io/resources-finalizer
 spec:
@@ -34,6 +36,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true
 
   # CRITICAL FOR GLOOMY/PERPETUAL OUTOFSYNC PREVENTION
   # Instructs ArgoCD to ignore the dynamic TLS configuration injected by Gatekeeper at runtime
