@@ -36,7 +36,7 @@ kind: K8sBlockNamespaceDefault
 metadata:
   name: block-namespace-default
 spec:
-  enforcementAction: deny # dryrun, warn, deny
+  enforcementAction: deny
   parameters:
     blockedNamespaces:
       - default
