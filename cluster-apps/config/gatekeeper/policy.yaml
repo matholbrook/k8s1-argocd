@@ -1,0 +1,46 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sblocknamespacedefault
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockNamespaceDefault
+      validation:
+        openAPIV3Schema:
+          type: object
+          required: ["blockedNamespaces"]
+          properties:
+            blockedNamespaces:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sblockdefaultnamespace
+
+        violation[{"msg": msg}] {
+          namespace := input.review.object.metadata.namespace
+          namespace == input.parameters.blockedNamespaces[_]
+          msg := sprintf("%v %q is not allowed in namespace %q", [
+            input.review.kind.kind,
+            input.review.object.metadata.name,
+            namespace,
+          ])
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sBlockNamespaceDefault
+metadata:
+  name: block-namespace-default
+spec:
+  enforcementAction: deny # dryrun, warn, deny
+  parameters:
+    blockedNamespaces:
+      - default
+  match:
+    kinds:
+      - apiGroups: ["*"]
+        kinds: ["*"]
